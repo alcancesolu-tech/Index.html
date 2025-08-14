@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Precificação BPO Financeiro com Proposta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d47a1;
+            --secondary-color: #1976d2;
+            --accent-color: #42a5f5;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --card-background: #ffffff;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: var(--accent-color);
+        }
+        .scenario-card.active, .term-card.active {
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(13, 71, 161, 0.3);
+        }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold header-title" style="color: var(--primary-color);">Calculadora de Precificação BPO</h1>
+            <p class="text-lg text-gray-600 mt-2">Estime o valor dos seus serviços e gere uma proposta profissional.</p>
+        </header>
+
+        <!-- Seção Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Coluna Esquerda: Serviços e Cenários -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-4 header-title" style="color: var(--primary-color);">1. Seleção de Serviços</h2>
+                    <div id="services-list" class="space-y-4"></div>
+                    <button id="btn-add-service-modal" class="mt-6 w-full btn-secondary font-bold py-2 px-4 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Adicionar Novo Serviço
+                    </button>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-4 header-title" style="color: var(--primary-color);">2. Cenários de Precificação</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div id="scenario-conservative" class="scenario-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Conservador</h3><p class="text-sm text-gray-500">Foco em conquistar clientes</p></div>
+                        <div id="scenario-moderate" class="scenario-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Moderado</h3><p class="text-sm text-gray-500">Equilíbrio ideal</p></div>
+                        <div id="scenario-aggressive" class="scenario-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Agressivo</h3><p class="text-sm text-gray-500">Maximizar lucros</p></div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-4 header-title" style="color: var(--primary-color);">3. Prazo de Pagamento</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div id="term-monthly" class="term-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Mensal</h3><p class="text-sm text-gray-500">Contrato padrão</p></div>
+                        <div id="term-quarterly" class="term-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Trimestral</h3><p class="text-sm text-gray-500">5% de Desconto</p></div>
+                        <div id="term-annually" class="term-card border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer transition-all"><h3 class="font-bold text-lg">Anual</h3><p class="text-sm text-gray-500">10% de Desconto</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Resumo -->
+            <div class="space-y-6">
+                <div class="card p-6 sticky top-8">
+                    <h2 class="text-2xl font-bold mb-4 header-title" style="color: var(--primary-color);">Resumo da Precificação</h2>
+                    <div class="space-y-3 text-gray-700">
+                        <div class="flex justify-between"><span>Custo Operacional:</span> <span id="summary-cost" class="font-semibold">R$ 0,00</span></div>
+                        <div class="flex justify-between"><span>Comissão Vendas:</span> <span id="summary-commission" class="font-semibold">R$ 0,00</span></div>
+                        <div class="flex justify-between"><span>Impostos (Simples):</span> <span id="summary-tax" class="font-semibold">R$ 0,00</span></div>
+                        <div class="flex justify-between"><span>Margem de Lucro:</span> <span id="summary-profit" class="font-semibold">R$ 0,00</span></div>
+                        <hr class="my-2">
+                        <div class="flex justify-between text-lg"><span class="font-bold">Subtotal:</span><span id="summary-subtotal" class="font-bold">R$ 0,00</span></div>
+                        <div class="flex justify-between text-green-600"><span>Desconto Prazo:</span><span id="summary-discount" class="font-semibold">- R$ 0,00</span></div>
+                    </div>
+                    <div class="mt-6 p-4 rounded-lg text-center accent-bg" style="background-color: var(--accent-color);">
+                        <p class="text-lg font-semibold text-white">Valor Final do Serviço</p>
+                        <p id="summary-total" class="text-4xl font-bold text-white">R$ 0,00</p>
+                    </div>
+                    <button id="btn-generate-proposal" class="mt-4 w-full btn-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center text-lg">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Gerar Proposta (PDF)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Configurações Inferior -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 header-title" style="color: var(--primary-color);">Configurações Avançadas</h3>
+                <div class="space-y-4">
+                    <div><label for="fixed-cost" class="block text-sm font-medium text-gray-700">Custo Fixo Mensal (R$)</label><input type="number" id="fixed-cost" value="800" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="hours-month" class="block text-sm font-medium text-gray-700">Horas Trabalhadas/Mês (por pessoa)</label><input type="number" id="hours-month" value="48" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="team-size" class="block text-sm font-medium text-gray-700">Pessoas na Operação</label><input type="number" id="team-size" value="1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="cost-hour" class="block text-sm font-medium text-gray-700">Custo por Hora (R$)</label><input type="number" id="cost-hour" value="16.67" step="0.01" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="simple-rate" class="block text-sm font-medium text-gray-700">Alíquota Simples Nacional (%)</label><input type="number" id="simple-rate" value="6" step="0.1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="commission-rate" class="block text-sm font-medium text-gray-700">Comissão de Vendas (%)</label><input type="number" id="commission-rate" value="0" step="0.1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <button id="btn-update-calcs" class="w-full btn-primary font-bold py-2 px-4 rounded-lg">Atualizar Cálculos</button>
+                </div>
+            </div>
+            
+            <div class="card p-6">
+                <h3 class="text-xl font-bold mb-4 header-title" style="color: var(--primary-color);">Personalize sua Proposta</h3>
+                <div class="space-y-4">
+                    <div><label for="company-name" class="block text-sm font-medium text-gray-700">Nome da Empresa</label><input type="text" id="company-name" placeholder="Sua Empresa LTDA" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="contact-email" class="block text-sm font-medium text-gray-700">E-mail de Contato</label><input type="email" id="contact-email" placeholder="contato@suaempresa.com" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="contact-whatsapp" class="block text-sm font-medium text-gray-700">WhatsApp</label><input type="text" id="contact-whatsapp" placeholder="(XX) XXXXX-XXXX" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="logo-url" class="block text-sm font-medium text-gray-700">URL do seu Logo</label><input type="text" id="logo-url" placeholder="https://suaempresa.com/logo.png" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div>
+                    <div><label for="primary-color-picker" class="block text-sm font-medium text-gray-700">Cor Principal</label><input type="color" id="primary-color-picker" value="#0d47a1" class="mt-1 h-10 block w-full border border-gray-300 rounded-md p-1"></div>
+                    <button id="btn-apply-custom" class="w-full btn-secondary font-bold py-2 px-4 rounded-lg">Aplicar Customização</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar Serviço -->
+    <div id="add-service-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"><div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"><div class="mt-3 text-center"><h3 class="text-lg leading-6 font-medium text-gray-900">Adicionar Novo Serviço</h3><div class="mt-2 px-7 py-3"><input id="new-service-name" type="text" placeholder="Nome do Serviço" class="mb-3 mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"><input id="new-service-time" type="number" placeholder="Tempo de Execução (minutos)" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></div><div class="items-center px-4 py-3"><button id="btn-add-new-service" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Adicionar</button><button id="btn-cancel-modal" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">Cancelar</button></div></div></div></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DATA STORE ---
+        let services = [
+            { id: 1, name: 'Emissão de NF automática', time: 1, quantity: 10, active: false },
+            { id: 2, name: 'Emissão de NF avulsa', time: 3, quantity: 1, active: false },
+            { id: 3, name: 'Emissão de boleto automático', time: 5, quantity: 5, active: false },
+            { id: 4, name: 'Emissão de boleto avulso', time: 10, quantity: 1, active: false },
+            { id: 5, name: 'Registros de recebimentos', time: 5, quantity: 100, active: false },
+            { id: 6, name: 'Registros de pagamentos', time: 5, quantity: 50, active: false },
+            { id: 7, name: 'Agendamento de pagamentos', time: 3, quantity: 50, active: false },
+            { id: 8, name: 'Conciliação bancária', time: 20, quantity: 1, active: false },
+            { id: 9, name: 'Gestão de contas a receber', time: 30, quantity: 1, active: false },
+            { id: 10, name: 'Gestão de contas a pagar', time: 30, quantity: 1, active: false },
+            { id: 11, name: 'Fluxo de caixa', time: 30, quantity: 1, active: false },
+            { id: 12, name: 'Gestão de indicadores', time: 40, quantity: 1, active: false },
+            { id: 13, name: 'Gestão de plataforma de recebimento', time: 10, quantity: 1, active: false },
+            { id: 14, name: 'Conciliação de fatura de cartão', time: 15, quantity: 1, active: false },
+            { id: 15, name: 'Reunião mensal de uma hora', time: 60, quantity: 1, active: false }
+        ];
+        let config = { fixedCost: 800, hoursPerMonth: 48, teamSize: 1, costPerHour: 16.67, simpleRate: 0.06, commissionRate: 0 };
+        const scenarios = { conservative: { profitMargin: 0.30 }, moderate: { profitMargin: 0.50 }, aggressive: { profitMargin: 0.70 } };
+        const paymentTerms = { monthly: { discount: 0 }, quarterly: { discount: 0.05 }, annually: { discount: 0.10 } };
+        let currentScenario = 'moderate';
+        let currentTerm = 'monthly';
+
+        // --- FUNCTIONS ---
+        const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        const updateAllCalculations = () => {
+            // 1. Update config from UI
+            config.fixedCost = parseFloat(document.getElementById('fixed-cost').value) || 0;
+            config.hoursPerMonth = parseFloat(document.getElementById('hours-month').value) || 1;
+            config.teamSize = parseInt(document.getElementById('team-size').value) || 1;
+            config.simpleRate = (parseFloat(document.getElementById('simple-rate').value) || 0) / 100;
+            config.commissionRate = (parseFloat(document.getElementById('commission-rate').value) || 0) / 100;
+            
+            const totalHours = config.teamSize * config.hoursPerMonth;
+            const calculatedCostPerHour = totalHours > 0 ? config.fixedCost / totalHours : 0;
+            document.getElementById('cost-hour').value = calculatedCostPerHour.toFixed(2);
+            config.costPerHour = parseFloat(document.getElementById('cost-hour').value) || 0;
+
+            // 2. Calculate costs
+            const activeServices = services.filter(s => s.active);
+            const totalMinutes = activeServices.reduce((acc, s) => acc + (s.time * s.quantity), 0);
+            const operationalCost = (totalMinutes / 60) * config.costPerHour;
+            const profitMarginRate = scenarios[currentScenario].profitMargin;
+            
+            // 3. Calculate selling price using markup formula
+            const denominator = 1 - config.simpleRate - config.commissionRate - profitMarginRate;
+            let sellingPrice = 0;
+            if (denominator > 0) {
+                sellingPrice = operationalCost / denominator;
+            } else {
+                sellingPrice = operationalCost * (1 + config.simpleRate + config.commissionRate + profitMarginRate);
+            }
+
+            // 4. Calculate individual components of the price
+            const commissionValue = sellingPrice * config.commissionRate;
+            const taxValue = sellingPrice * config.simpleRate;
+            const profitValue = sellingPrice * profitMarginRate;
+            const discountRate = paymentTerms[currentTerm].discount;
+            const discountValue = sellingPrice * discountRate;
+            const finalPrice = sellingPrice - discountValue;
+
+            // 5. Update UI
+            document.getElementById('summary-cost').textContent = formatCurrency(operationalCost);
+            document.getElementById('summary-commission').textContent = formatCurrency(commissionValue);
+            document.getElementById('summary-tax').textContent = formatCurrency(taxValue);
+            document.getElementById('summary-profit').textContent = formatCurrency(profitValue);
+            document.getElementById('summary-subtotal').textContent = formatCurrency(sellingPrice);
+            document.getElementById('summary-discount').textContent = `- ${formatCurrency(discountValue)}`;
+            document.getElementById('summary-total').textContent = formatCurrency(finalPrice);
+        };
+
+        const renderServices = () => {
+            const list = document.getElementById('services-list');
+            list.innerHTML = '';
+            services.forEach(s => {
+                const el = document.createElement('div');
+                el.className = `p-4 rounded-lg flex items-center justify-between transition-all ${s.active ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-gray-50'}`;
+                el.innerHTML = `<div class="flex items-center"><label class="switch mr-4"><input type="checkbox" data-id="${s.id}" class="service-toggle" ${s.active ? 'checked' : ''}><span class="slider"></span></label><div><p class="font-semibold text-gray-800">${s.name}</p><p class="text-sm text-gray-500">${s.time} min/unidade</p></div></div><div class="flex items-center space-x-2"><label for="qty-${s.id}" class="text-sm text-gray-600">Qtd:</label><input type="number" data-id="${s.id}" value="${s.quantity}" min="1" class="w-20 p-1 border border-gray-300 rounded-md text-center service-qty" ${!s.active ? 'disabled' : ''}><button data-id="${s.id}" class="text-gray-400 hover:text-red-500 transition-colors service-remove"><svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div>`;
+                list.appendChild(el);
+            });
+        };
+        
+        const openAddServiceModal = () => document.getElementById('add-service-modal').classList.remove('hidden');
+        const closeAddServiceModal = () => {
+            document.getElementById('add-service-modal').classList.add('hidden');
+            document.getElementById('new-service-name').value = '';
+            document.getElementById('new-service-time').value = '';
+        };
+
+        const addNewService = () => {
+            const name = document.getElementById('new-service-name').value;
+            const time = parseInt(document.getElementById('new-service-time').value, 10);
+            if (name && time > 0) {
+                const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
+                services.push({ id: newId, name, time, quantity: 1, active: true });
+                renderServices();
+                updateAllCalculations();
+                closeAddServiceModal();
+            } else {
+                alert('Por favor, preencha o nome e um tempo válido para o serviço.');
+            }
+        };
+
+        const selectScenario = (scenario) => {
+            currentScenario = scenario;
+            document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`scenario-${scenario}`).classList.add('active');
+            updateAllCalculations();
+        };
+
+        const selectTerm = (term) => {
+            currentTerm = term;
+            document.querySelectorAll('.term-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`term-${term}`).classList.add('active');
+            updateAllCalculations();
+        };
+
+        const lightenDarkenColor = (col, amt) => {
+            let usePound = false;
+            if (col[0] === "#") { col = col.slice(1); usePound = true; }
+            const num = parseInt(col, 16);
+            let r = (num >> 16) + amt;
+            if (r > 255) r = 255; else if (r < 0) r = 0;
+            let b = ((num >> 8) & 0x00FF) + amt;
+            if (b > 255) b = 255; else if (b < 0) b = 0;
+            let g = (num & 0x0000FF) + amt;
+            if (g > 255) g = 255; else if (g < 0) g = 0;
+            return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+        };
+
+        const applyCustomization = () => {
+            const primaryColor = document.getElementById('primary-color-picker').value;
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            document.documentElement.style.setProperty('--secondary-color', lightenDarkenColor(primaryColor, 20));
+            document.documentElement.style.setProperty('--accent-color', lightenDarkenColor(primaryColor, 40));
+        };
+
+        const generateProposal = () => {
+            const finalPrice = document.getElementById('summary-total').textContent;
+            const logoUrl = document.getElementById('logo-url').value || 'https://placehold.co/200x80/0d47a1/ffffff?text=Seu+Logo';
+            const primaryColor = document.getElementById('primary-color-picker').value;
+            const companyName = document.getElementById('company-name').value || 'Sua Empresa';
+            const contactEmail = document.getElementById('contact-email').value || 'contato@suaempresa.com';
+            const contactWhatsapp = document.getElementById('contact-whatsapp').value || '(XX) XXXXX-XXXX';
+            const activeServices = services.filter(s => s.active);
+            
+            const servicesHtml = activeServices.map(s => `<tr class="border-b"><td class="py-2 px-4">${s.name}</td><td class="py-2 px-4 text-center">${s.quantity}</td></tr>`).join('');
+
+            const proposalHtml = `<html><head><title>Proposta de Serviços - BPO Financeiro</title><script src="https://cdn.tailwindcss.com"><\/script><style>@media print{body{-webkit-print-color-adjust:exact}.no-print{display:none}}body{font-family:'Inter',sans-serif}.header{background-color:${primaryColor}}</style></head><body class="bg-gray-100 p-8"><div class="max-w-4xl mx-auto bg-white p-10 rounded-lg shadow-lg"><header class="flex justify-between items-center pb-6 border-b mb-8"><img src="${logoUrl}" alt="Logo da Empresa" style="max-height:60px;"><h1 class="text-3xl font-bold text-right" style="color:${primaryColor};">Proposta Comercial</h1></header><main><div class="grid grid-cols-2 gap-8 mb-8"><div><h2 class="text-lg font-semibold" style="color:${primaryColor};">Preparado para:</h2><input type="text" placeholder="Nome do Cliente" class="border p-2 rounded w-full mt-2"><input type="text" placeholder="Empresa do Cliente" class="border p-2 rounded w-full mt-2"></div><div class="text-right"><h2 class="text-lg font-semibold" style="color:${primaryColor};">Data da Proposta:</h2><p>${new Date().toLocaleDateString('pt-BR')}</p></div></div><h2 class="text-2xl font-bold mb-4" style="color:${primaryColor};">Escopo dos Serviços</h2><p class="mb-6 text-gray-600">Apresentamos nossa proposta para a prestação de serviços de BPO Financeiro, conforme detalhado abaixo:</p><table class="w-full text-left"><thead><tr class="bg-gray-100"><th class="py-3 px-4 font-semibold">Serviço</th><th class="py-3 px-4 font-semibold text-center">Quantidade Mensal</th></tr></thead><tbody>${servicesHtml}</tbody></table><div class="mt-10 text-right"><p class="text-gray-600 text-lg">Investimento Mensal</p><p class="text-4xl font-bold" style="color:${primaryColor};">${finalPrice}</p></div></main><footer class="mt-12 pt-6 border-t text-center text-gray-500 text-sm"><p>Esta proposta é válida por 15 dias. Agradecemos a oportunidade!</p><p>${companyName} | ${contactEmail} | ${contactWhatsapp}</p></footer></div><div class="text-center mt-6 no-print"><button onclick="window.print()" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">Imprimir / Salvar PDF</button></div></body></html>`;
+            
+            const proposalWindow = window.open('', '_blank');
+            proposalWindow.document.write(proposalHtml);
+            proposalWindow.document.close();
+        };
+
+        // --- EVENT LISTENERS ---
+        const setupEventListeners = () => {
+            document.getElementById('btn-add-service-modal').addEventListener('click', openAddServiceModal);
+            document.getElementById('btn-add-new-service').addEventListener('click', addNewService);
+            document.getElementById('btn-cancel-modal').addEventListener('click', closeAddServiceModal);
+            
+            document.getElementById('scenario-conservative').addEventListener('click', () => selectScenario('conservative'));
+            document.getElementById('scenario-moderate').addEventListener('click', () => selectScenario('moderate'));
+            document.getElementById('scenario-aggressive').addEventListener('click', () => selectScenario('aggressive'));
+
+            document.getElementById('term-monthly').addEventListener('click', () => selectTerm('monthly'));
+            document.getElementById('term-quarterly').addEventListener('click', () => selectTerm('quarterly'));
+            document.getElementById('term-annually').addEventListener('click', () => selectTerm('annually'));
+
+            document.getElementById('btn-update-calcs').addEventListener('click', updateAllCalculations);
+            document.getElementById('btn-apply-custom').addEventListener('click', applyCustomization);
+            document.getElementById('btn-generate-proposal').addEventListener('click', generateProposal);
+
+            // Listen for changes on the dynamic services list
+            document.getElementById('services-list').addEventListener('change', (e) => {
+                const id = parseInt(e.target.dataset.id, 10);
+                if (e.target.classList.contains('service-toggle')) {
+                    const service = services.find(s => s.id === id);
+                    if (service) service.active = !service.active;
+                    renderServices(); // Re-render to enable/disable input
+                }
+                if (e.target.classList.contains('service-qty')) {
+                    const service = services.find(s => s.id === id);
+                    if (service) service.quantity = parseInt(e.target.value, 10) || 1;
+                }
+                updateAllCalculations();
+            });
+
+            // Listen for clicks on the dynamic services list (for remove button)
+            document.getElementById('services-list').addEventListener('click', (e) => {
+                if (e.target.classList.contains('service-remove')) {
+                    const id = parseInt(e.target.dataset.id, 10);
+                    if (confirm('Tem certeza que deseja remover este serviço?')) {
+                        services = services.filter(s => s.id !== id);
+                        renderServices();
+                        updateAllCalculations();
+                    }
+                }
+            });
+        };
+
+        // --- INITIALIZATION ---
+        const init = () => {
+            try {
+                renderServices();
+                selectScenario('moderate');
+                selectTerm('monthly');
+                updateAllCalculations();
+                applyCustomization();
+                setupEventListeners();
+            } catch (e) {
+                console.error("Erro durante a inicialização da calculadora:", e);
+                alert("Ocorreu um erro ao carregar a calculadora. Verifique o console para mais detalhes.");
+            }
+        };
+
+        init();
+    });
+    </script>
+</body>
+</html>
